@@ -1,5 +1,6 @@
 const display = document.querySelector(".calculator-display")
 const keypad = document.querySelector(".calculator-keypad")
+const clearHistoryBtn = document.querySelector(".clear-history-btn")
 
 if (!display) {
   throw new Error("No se encontró el display de la calculadora")
@@ -9,10 +10,15 @@ if (!keypad) {
   throw new Error("No se encontró el keypad de la calculadora")
 }
 
+if (!clearHistoryBtn) {
+  throw new Error("No se encontró el botón para borrar historial")
+}
+
 const calculatorState = {
   currentValue: "0",
   previousValue: null,
-  operator: null
+  operator: null,
+  divisionByZero: false
 }
 
 const buttons = [
@@ -33,7 +39,8 @@ const buttons = [
   { label: "=", type: "equals" },
   { label: "+", type: "operator" },
   { label: "<-", type: "delete" },
-  { label: ",", type: "decimal"}
+  { label: ",", type: "decimal"},
+  { label: "%", type: "percentage"},
 ]
 
 function renderDisplay () {
@@ -61,6 +68,11 @@ buttons.forEach(function (buttonConfig) {
 })
 
 function handleNumber (value) {
+  if (calculatorState.divisionByZero) {
+    clearCalculator()
+    calculatorState.divisionByZero = false
+  }
+
   if (calculatorState.currentValue === "0") {
     calculatorState.currentValue = value
     return
@@ -79,6 +91,14 @@ function clearCalculator () {
   calculatorState.currentValue = "0"
   calculatorState.previousValue = null
   calculatorState.operator = null
+}
+
+function calcPercentage() {
+  const current = Number(calculatorState.currentValue);
+  const percentageValue = current / 100;
+  calculatorState.currentValue = String(percentageValue);
+  addHistoryEntry (calculatorState.currentValue, "100", "%", percentageValue);  
+
 }
 
 function addHistoryEntry (previous, current, operator, result)
@@ -113,31 +133,53 @@ function calculateResult () {
 
   case "/":
     if (current === 0) {
-      result = "Error: División por cero";
-    } else {
-      result = previous / current;
-    }
+    calculatorState.divisionByZero = true
+    result = null
+  } else {
+    result = previous / current
+  }
     break;
 }
-  addHistoryEntry (previous, current, calculatorState.operator, result);
-  calculatorState.currentValue = String(result)
-  calculatorState.previousValue = null
-  calculatorState.operator = null
+  if (calculatorState.divisionByZero) {
+    calculatorState.currentValue = "Error: División por cero"
+    calculatorState.previousValue = null
+    calculatorState.operator = null
+  } else {
+    addHistoryEntry(previous, current, calculatorState.operator, result)
+    calculatorState.currentValue = String(result)
+    calculatorState.previousValue = null
+    calculatorState.operator = null
+  }
 }
 
 function deleteLastDigit () {
-    if (calculatorState.currentValue.length > 1) {
+  if (calculatorState.divisionByZero)
+    {
+        clearCalculator();
+        calculatorState.divisionByZero = false;
+        return; 
+    } 
+  else
+  {
+      if (calculatorState.currentValue.length > 1) {
         calculatorState.currentValue= calculatorState.currentValue.slice(0, -1);
-    }
-    else{
+      }
+      else{
         calculatorState.currentValue = "0";
-    }
+      }
+  }
+    
 }
 
 function AddDecimal(){
     if (!calculatorState.currentValue.includes(".")) {
         calculatorState.currentValue += ".";
     }
+}
+
+function clearHistory() {
+  const historyList = document.querySelector(".history-list")
+  historyList.innerHTML = ""
 }
 
 function buttonPress (event) {
@@ -176,9 +218,13 @@ function buttonPress (event) {
     case "decimal":
         AddDecimal();
         break;
+    case "percentage":
+      calcPercentage();
+      break;      
   }
 
   renderDisplay()
 }
 
 keypad.addEventListener("click", buttonPress)
+clearHistoryBtn.addEventListener("click", clearHistory)

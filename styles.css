@@ -108,3 +108,32 @@ aside {
   min-width: 350px;
   text-align: left;
 }
+
+.history-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.clear-history-btn {
+  display: block;
+  margin: 12px 0;
+  padding: 10px 16px;
+  background-color: rgb(0, 71, 204);
+  color: #ffffff;
+  border: 2px solid #003099;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-history-btn:hover {
+  background-color: #003d99;
+  border-color: #001b66;
+}
+
+.clear-history-btn:active {
+  background-color: #001866;
+}
